@@ -1,0 +1,139 @@
+<!DOCTYPE HTML>
+<html lang="zh-cmn-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=0.5 user-scalable=no">
+<meta name="theme-color" content="#000">
+<title>hello world</title>
+<style>
+body {
+    background-color: black;
+}
+div{
+    top:0px;
+    left:0px;
+    text-align: center;
+}
+.content{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    margin: 0px;
+    
+    color: white;
+    user-select:none;
+    font-size: 3em;
+    transition: 2s;
+    width: 100%;
+}
+@keyframes fadeout
+{
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+@keyframes fadein
+{
+    from {
+        opacity: 0;
+        margin-top: 0.3em;
+    }
+    to {
+        opacity: 1;
+        margin-top: 0px;
+    }
+}
+</style>
+</head>
+<body>
+<audio autoplay>
+  <source src="unjust life.mp3" type="audio/mpeg">
+</audio>
+<div id="wrapper">
+<p class="content" style="display: none;">Hello World</p>
+</div>
+<script>
+var wrapper = document.getElementById("wrapper");
+//default property
+var def_fadeinDe = 1000;
+var def_fadeinDu = 1000;
+var def_fadeoutDe = 0;
+var def_fadeoutDu = 1000;
+var def_keepdelay = 2000;
+//ajax json
+var req=new XMLHttpRequest();
+req.onreadystatechange=function(){
+    if (req.readyState != 4 || req.status!=200) return;
+    var json = JSON.parse(req.responseText);
+    start(json);
+}
+req.open("GET",'meta.json',true);
+req.send(null);
+
+//functions
+function start(meta){
+    var inde = meta[0].fadeinDe?meta[0].fadeinDe:def_fadeinDe;
+    setTimeout(loop,inde,meta);
+}
+
+function loop(meta,index){
+    //property
+    var i = index?index:0;
+    var keepde = meta[i].keepdelay?meta[i].keepdelay:def_keepdelay;
+    //switch
+    sw(meta[i],function(){
+        //next
+        i++;
+        if(i==meta.length) i=0;
+        setTimeout(loop,keepde,meta,i);
+    });
+}
+
+function sw(meta,callback){
+    //property
+    var str = meta.text;
+    var inde = meta.fadeinDe?meta.fadeinDe:def_fadeinDe;
+    var indu = meta.fadeinDu?meta.fadeinDu:def_fadeinDu;
+    var outde = meta.fadeoutDe?meta.fadeoutDe:def_fadeoutDe;
+    var outdu = meta.fadeoutDu?meta.fadeoutDu:def_fadeoutDu;
+    var style = meta.style?meta.style:'';
+    //fadeout
+    setTimeout(function(){
+        var last = wrapper.lastElementChild;
+        last.style.animation='fadeout '+outdu+'ms forwards';
+        //fadein
+        setTimeout(function(){
+            document.title=str;
+            var p = modelp(str,style);
+            wrapper.appendChild(p);
+            p.style.animation='fadein '+indu+'ms forwards';
+            //clear old
+            for(var i=0;i<wrapper.children.length;i++){
+                if (wrapper.children[i].style['animation-play-state']!='running') wrapper.children[i].remove();
+            }
+            //callback
+            return callback();
+        },inde);
+    },outde);
+}
+
+function modelp(str,style){
+    var p = document.createElement("p");
+    p.className="content"
+    p.innerHTML=str;
+    p.style.opacity=0;
+    //style
+    for(key in style){
+        p.style[key]=style[key];
+    }
+    return p;
+}
+</script>
+</body>
+</html>
